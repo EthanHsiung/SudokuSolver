@@ -1,75 +1,70 @@
 # -*- coding:UTF-8 -*-
 #!usr/bin/env python
 import numpy as np 
-import time
-
-def nine(data):
-    nine_blocks = np.zeros([3,3,3,3], dtype = int)
-    for i in range(3):
-        for j in range(3):
-            nine_blocks[i,j] = data[3*i:3*(i+1),3*j:3*(j+1)]
-    return nine_blocks
-
-def numSet(data,nine_blocks):
-    numPickSet = {}
+def Insert(zero):
+    for line in range(9):
+        print("请输入第%s行"%(str(line+1)))
+        a = input()
+        while len(a)!=9:
+            print("位数错误！")
+            print("请输入第%s行"%(str(line+1)))
+            a = input()
+        for col in range(9):
+            zero[line,col] = a[col]
+    return zero
+def PossNum(sudu):
+    possnum={}
     for i in range(9):
         for j in range(9):
-            if data[i,j] == 0:
-                impossibleNum = set(data[i,:])|set(data[:,j])|set(nine_blocks[i//3,j//3].ravel())
-                numPickSet[str(i)+str(j)] = set(np.array(range(10))) - impossibleNum
-    return numPickSet               #dictionary
-
-def TryInsert(data):
-    time1 = time.time()
-    insertStep = []
+            if sudu[i,j]==0:
+                numset1 = set(sudu[i,:])
+                numset2 = set(sudu[:,j])
+                lblk,cblk=i//3,j//3
+                numset3 = set(sudu[lblk*3:lblk*3+3,cblk*3])|set(sudu[lblk*3:lblk*3+3,cblk*3+1])|set(sudu[lblk*3:lblk*3+3,cblk*3+2])
+                numpick={0,1,2,3,4,5,6,7,8,9}
+                possnum[i,j] =numpick-(numset1|numset2|numset3)
+    return possnum            
+    
+def Trysolve(sudu):
+    Steps=[]
     while True:
-
-        numPickSet = numSet(data,nine(data))
-        if len(numPickSet) == 0:
+        #先选出可能值最少的位置（排序）
+        possnum = PossNum(sudu)
+        if len(possnum)==0:
             break
-        pickSort = sorted(numPickSet.items(),key = lambda x:len(x[1]))
-        itemMin = pickSort[0]
-        position = itemMin[0]
-        value = list(itemMin[1])
-        insertStep.append((position,value))
-        if len(value) != 0:
-            data[int(position[0]),int(position[1])] = value[0]
-        else:
-            insertStep.pop()
-            for x in range(len(insertStep)):
-                backstep = insertStep.pop()
-                position = backstep[0]
-                insertNumSet = backstep[1]
-                if len(insertNumSet) == 1:
-                    data[int(position[0]),int(position[1])] = 0
+        sorted_possnum = sorted(possnum.items(),key = lambda x:len(x[1]))
+        item = sorted_possnum[0]   #最有可能正确的位置与可能值
+        position = item[0]
+        pos_value =list(item[1])
+        Steps.append((position,pos_value))
+        if len(pos_value)!=0:
+            sudu[int(position[0]),int(position[1])]=pos_value[0]
+        else:     #上一步出错
+            Steps.pop()
+            for step in range(len(Steps)):
+                last_step = Steps.pop()
+                position = last_step[0]
+                pos_value = last_step[1]
+                if len(pos_value)==1:
+                    #上一步错误的情况下的唯一解
+                    sudu[int(position[0]),int(position[1])]=0
                 else:
-                    data[int(position[0]),int(position[1])] = insertNumSet[1]
-                    insertStep.append((position, insertNumSet[1:]))
+                    sudu[int(position[0]),int(position[1])]=pos_value[1]
+                    Steps.append((position,pos_value[1:]))
                     break
-        time2 = time.time()
-
-    print("Finished!\nUsing time:%f s"%(time2-time1))
-    print(data)
-
-data = np.array([[0,0,0,0,0,0,0,0,0],\
-                [0,0,0,0,0,0,0,0,0],\
-                [0,0,0,0,0,0,0,0,0],\
-                [0,0,0,0,0,0,0,0,0],\
-                [0,0,0,0,0,0,0,0,0],\
-                [0,0,0,0,0,0,0,0,0],\
-                [0,0,0,0,0,0,0,0,0],\
-                [0,0,0,0,0,0,0,0,0],\
-                [0,0,0,0,0,0,0,0,0]])
-for i in range(9):
-    rowNum = input("PLEASE ENTER YOUR NUMBER--LINE%s\n"%(i+1))
-    rowNum = rowNum.split()
-    while len(rowNum) != 9:
-        print("WRONG!PLEASE ENTER AGAIN!")
-        rowNum = input("PLEASE ENTER YOUR NUMBER--LINE%s\n"%(i+1))
-        rowNum = rowNum.split()
-    data[i]=rowNum
-print(data)
-TryInsert(data)
-
+    return sudu
+z = np.zeros([9,9])
+n = Insert(z)
+#n=np.array([[0,2,3,4,5,6,7,8,9],\
+# [2,3,4,5,6,7,8,9,1],\
+# [3,4,5,6,7,8,9,1,2],\
+# [4,5,6,7,8,9,1,2,3],\
+# [5,6,7,8,9,1,2,3,4],\
+# [6,7,8,9,1,2,3,4,5],\
+# [7,8,9,1,2,3,4,5,6],\
+# [8,9,1,2,3,4,5,6,7],\
+# [9,1,2,3,4,5,6,7,8]])
+k=Trysolve(n)
+print(k)
 
 
